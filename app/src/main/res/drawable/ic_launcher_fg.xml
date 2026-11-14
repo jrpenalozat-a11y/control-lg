@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Cuerpo del control -->
+    <path
+        android:fillColor="#2A2D34"
+        android:pathData="M43,26h22a5,5 0,0 1,5 5v46a5,5 0,0 1,-5 5h-22a5,5 0,0 1,-5 -5v-46a5,5 0,0 1,5 -5z" />
+    <!-- Botón de encendido -->
+    <path
+        android:fillColor="#E5484D"
+        android:pathData="M54,37m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <!-- Cruceta -->
+    <path
+        android:fillColor="#FF5C8A"
+        android:pathData="M54,56m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+    <!-- Botones inferiores -->
+    <path
+        android:fillColor="#9AA0AA"
+        android:pathData="M47,72m-2.5,0a2.5,2.5 0,1 1,5 0a2.5,2.5 0,1 1,-5 0" />
+    <path
+        android:fillColor="#9AA0AA"
+        android:pathData="M61,72m-2.5,0a2.5,2.5 0,1 1,5 0a2.5,2.5 0,1 1,-5 0" />
+</vector>
