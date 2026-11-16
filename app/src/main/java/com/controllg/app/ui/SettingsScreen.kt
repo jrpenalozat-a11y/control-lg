@@ -14,14 +14,21 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -30,11 +37,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.controllg.app.APP_KEYS
 import com.controllg.app.AppSettings
 import com.controllg.app.PROFILES
+import com.controllg.app.PROFILE_STANDARD
+import com.controllg.app.TvConfig
 import com.controllg.app.SettingsRepository
 import com.controllg.app.exportConfigJson
 import com.controllg.app.parseConfigJson
@@ -107,6 +117,14 @@ fun SettingsScreen(
     ) {
         Header(title = "Configuración", onBack = onBack)
 
+        TvsSection(settings, repository)
+
+        Text(
+            "Lo que sigue se aplica a «${settings.tv.name}». Para configurar otra tele, tócala arriba.",
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
         SectionTitle("Perfil de códigos")
         PROFILES.forEach { profile ->
             val selected = profile.id == settings.profileId
@@ -148,7 +166,8 @@ fun SettingsScreen(
 
         SectionTitle("Botones de apps")
         Text(
-            "No todos los modelos LG traen estas apps. Apaga las que tu tele no tenga.",
+            "Apaga las apps que esta tele no tenga. Las que digan «Sin código» se configuran " +
+                "en el Editor de códigos con el botón «Buscar».",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -180,7 +199,7 @@ fun SettingsScreen(
             OutlinedButton(
                 onClick = {
                     try {
-                        exportLauncher.launch("control-lg-codigos.json")
+                        exportLauncher.launch("control-lg-${settings.tv.name.replace(' ', '-').lowercase()}.json")
                     } catch (e: Exception) {
                         notify("Este celular no tiene una app para guardar archivos")
                     }
@@ -203,6 +222,122 @@ fun SettingsScreen(
             }
         }
     }
+}
+
+/** Lista de teles: elegir, renombrar, borrar y agregar. */
+@Composable
+private fun TvsSection(settings: AppSettings, repository: SettingsRepository) {
+    val scope = rememberCoroutineScope()
+    var renaming by remember { mutableStateOf<TvConfig?>(null) }
+    var deleting by remember { mutableStateOf<TvConfig?>(null) }
+    var adding by remember { mutableStateOf(false) }
+
+    SectionTitle("Mis teles")
+    settings.tvs.forEach { tv ->
+        val selected = tv.id == settings.tv.id
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .selectable(
+                    selected = selected,
+                    role = Role.RadioButton,
+                    onClick = { scope.launch { repository.selectTv(tv.id) } },
+                )
+                .heightIn(min = 60.dp)
+                .padding(vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(selected = selected, onClick = null, modifier = Modifier.padding(horizontal = 12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    tv.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                Text(
+                    profileById(tv.profileId).name,
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            TextButton(onClick = { renaming = tv }) { Text("Renombrar") }
+            if (settings.tvs.size > 1) {
+                TextButton(onClick = { deleting = tv }) { Text("Borrar") }
+            }
+        }
+    }
+    OutlinedButton(onClick = { adding = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+        Text("Agregar otra tele")
+    }
+
+    renaming?.let { tv ->
+        NameDialog(
+            title = "Nombre de la tele",
+            initial = tv.name,
+            confirm = "Guardar",
+            onConfirm = { name -> scope.launch { repository.renameTv(tv.id, name) } },
+            onDismiss = { renaming = null },
+        )
+    }
+    if (adding) {
+        NameDialog(
+            title = "Nueva tele",
+            initial = "",
+            confirm = "Agregar",
+            onConfirm = { name -> scope.launch { repository.addTv(name, PROFILE_STANDARD) } },
+            onDismiss = { adding = false },
+        )
+    }
+    deleting?.let { tv ->
+        AlertDialog(
+            onDismissRequest = { deleting = null },
+            title = { Text("¿Borrar «${tv.name}»?") },
+            text = { Text("Se borran sus códigos y ajustes. Las otras teles no cambian.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch { repository.deleteTv(tv.id) }
+                    deleting = null
+                }) { Text("Borrar") }
+            },
+            dismissButton = { TextButton(onClick = { deleting = null }) { Text("Cancelar") } },
+        )
+    }
+}
+
+@Composable
+private fun NameDialog(
+    title: String,
+    initial: String,
+    confirm: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var text by remember { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it.take(30) },
+                singleLine = true,
+                label = { Text("Nombre") },
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                enabled = text.isNotBlank(),
+                onClick = {
+                    onConfirm(text)
+                    onDismiss()
+                },
+            ) { Text(confirm) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } },
+    )
 }
 
 @Composable

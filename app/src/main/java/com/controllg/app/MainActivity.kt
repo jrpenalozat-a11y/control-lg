@@ -147,6 +147,9 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
                                 notify("No se pudo compartir la app: ${e.message ?: e.javaClass.simpleName}")
                             }
                         },
+                        tvs = settings.tvs,
+                        selectedTvId = settings.tv.id,
+                        onSelectTv = { id -> scope.launch { repository.selectTv(id) } },
                     )
 
                     Screen.SETTINGS -> SettingsScreen(

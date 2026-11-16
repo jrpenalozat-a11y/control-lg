@@ -2,6 +2,7 @@ package com.controllg.app
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -12,18 +13,42 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.IOException
+import java.util.UUID
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "ajustes")
 
-data class AppSettings(
+/** Una tele que maneja la app, con sus propios códigos y botones de apps. */
+data class TvConfig(
+    val id: String,
+    val name: String,
     val profileId: String = PROFILE_STANDARD,
     /** Códigos cambiados en el editor, por perfil: BOTON → "0x…" o "" (sin código). */
     val overrides: Map<String, Map<String, String>> = emptyMap(),
     val hiddenApps: Set<RemoteKey> = DEFAULT_HIDDEN_APPS,
+)
+
+/** Teles de partida: la LG de la cocina y la AOC de la pieza. */
+val DEFAULT_TVS = listOf(
+    TvConfig(id = "cocina", name = "LG cocina", profileId = PROFILE_STANDARD),
+    TvConfig(id = "pieza", name = "TV Pipi pieza", profileId = PROFILE_BLANK),
+)
+
+data class AppSettings(
+    val tvs: List<TvConfig> = DEFAULT_TVS,
+    val selectedTvId: String = DEFAULT_TVS.first().id,
     val keepScreenOn: Boolean = false,
     val wizardDone: Boolean = false,
 ) {
+    /** La tele que se está manejando ahora. */
+    val tv: TvConfig get() = tvs.firstOrNull { it.id == selectedTvId } ?: tvs.first()
+
+    val profileId: String get() = tv.profileId
+    val overrides: Map<String, Map<String, String>> get() = tv.overrides
+    val hiddenApps: Set<RemoteKey> get() = tv.hiddenApps
     val profile: CodeProfile get() = profileById(profileId)
 
     /** Códigos que se envían de verdad: los de fábrica del perfil con los cambios del editor. */
@@ -47,30 +72,91 @@ class SettingsRepository(context: Context) {
     private val store = context.applicationContext.dataStore
 
     private object Keys {
-        val PROFILE = stringPreferencesKey("perfil")
-        val OVERRIDES = stringPreferencesKey("codigos_editados")
-        val HIDDEN_APPS = stringSetPreferencesKey("apps_ocultas")
+        val TVS = stringPreferencesKey("teles")
+        val SELECTED_TV = stringPreferencesKey("tele_actual")
         val KEEP_SCREEN_ON = booleanPreferencesKey("pantalla_encendida")
         val WIZARD_DONE = booleanPreferencesKey("asistente_listo")
+
+        // Versión anterior (una sola tele): se migran a la LG de la cocina.
+        val LEGACY_PROFILE = stringPreferencesKey("perfil")
+        val LEGACY_OVERRIDES = stringPreferencesKey("codigos_editados")
+        val LEGACY_HIDDEN_APPS = stringSetPreferencesKey("apps_ocultas")
     }
 
     val settings: Flow<AppSettings> = store.data
         .catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }
         .map { p ->
+            val tvs = readTvs(p)
             AppSettings(
-                profileId = profileById(p[Keys.PROFILE]).id,
-                overrides = decodeOverrides(p[Keys.OVERRIDES]),
-                hiddenApps = p[Keys.HIDDEN_APPS]
-                    ?.mapNotNull { name -> APP_KEYS.firstOrNull { it.name == name } }
-                    ?.toSet()
-                    ?: DEFAULT_HIDDEN_APPS,
+                tvs = tvs,
+                selectedTvId = p[Keys.SELECTED_TV]?.takeIf { id -> tvs.any { it.id == id } } ?: tvs.first().id,
                 keepScreenOn = p[Keys.KEEP_SCREEN_ON] ?: false,
                 wizardDone = p[Keys.WIZARD_DONE] ?: false,
             )
         }
 
+    private fun readTvs(p: Preferences): List<TvConfig> {
+        decodeTvs(p[Keys.TVS])?.let { return it }
+        // Primera vez con esta versión: lo configurado antes queda en la LG de la cocina.
+        val cocina = DEFAULT_TVS[0].copy(
+            profileId = profileById(p[Keys.LEGACY_PROFILE]).id,
+            overrides = decodeOverrides(p[Keys.LEGACY_OVERRIDES]),
+        )
+        return listOf(cocina) + DEFAULT_TVS.drop(1)
+    }
+
+    private fun selectedId(p: Preferences, tvs: List<TvConfig>): String =
+        p[Keys.SELECTED_TV]?.takeIf { id -> tvs.any { it.id == id } } ?: tvs.first().id
+
+    /** Cambia la tele elegida (o la indicada por [tvId]). */
+    private suspend fun editTv(tvId: String? = null, change: (TvConfig) -> TvConfig) {
+        store.edit { p ->
+            val tvs = readTvs(p)
+            val target = tvId ?: selectedId(p, tvs)
+            p.writeTvs(tvs.map { if (it.id == target) change(it) else it })
+        }
+    }
+
+    private fun MutablePreferences.writeTvs(tvs: List<TvConfig>) {
+        this[Keys.TVS] = encodeTvs(tvs)
+    }
+
+    suspend fun selectTv(tvId: String) {
+        store.edit { it[Keys.SELECTED_TV] = tvId }
+    }
+
+    suspend fun renameTv(tvId: String, name: String) {
+        val clean = name.trim()
+        if (clean.isNotEmpty()) editTv(tvId) { it.copy(name = clean) }
+    }
+
+    /** Agrega una tele nueva y la deja elegida. */
+    suspend fun addTv(name: String, profileId: String) {
+        store.edit { p ->
+            val tvs = readTvs(p)
+            val tv = TvConfig(
+                id = UUID.randomUUID().toString(),
+                name = name.trim().ifEmpty { "Tele ${tvs.size + 1}" },
+                profileId = profileById(profileId).id,
+            )
+            p.writeTvs(tvs + tv)
+            p[Keys.SELECTED_TV] = tv.id
+        }
+    }
+
+    /** Borra una tele (siempre queda al menos una). */
+    suspend fun deleteTv(tvId: String) {
+        store.edit { p ->
+            val tvs = readTvs(p)
+            if (tvs.size <= 1) return@edit
+            val rest = tvs.filter { it.id != tvId }
+            p.writeTvs(rest)
+            if (selectedId(p, tvs) == tvId) p[Keys.SELECTED_TV] = rest.first().id
+        }
+    }
+
     suspend fun setProfile(profileId: String) {
-        store.edit { it[Keys.PROFILE] = profileById(profileId).id }
+        editTv { it.copy(profileId = profileById(profileId).id) }
     }
 
     suspend fun setWizardDone(done: Boolean) {
@@ -82,17 +168,14 @@ class SettingsRepository(context: Context) {
     }
 
     suspend fun setAppHidden(key: RemoteKey, hidden: Boolean) {
-        store.edit { p ->
-            val current = p[Keys.HIDDEN_APPS] ?: DEFAULT_HIDDEN_APPS.map { it.name }.toSet()
-            p[Keys.HIDDEN_APPS] = if (hidden) current + key.name else current - key.name
-        }
+        editTv { tv -> tv.copy(hiddenApps = if (hidden) tv.hiddenApps + key else tv.hiddenApps - key) }
     }
 
     /** Guarda el código de un botón. Si es igual al de fábrica, se borra el cambio. */
     suspend fun setCode(profileId: String, key: RemoteKey, code: Long?) {
         val profile = profileById(profileId)
-        store.edit { p ->
-            val all = decodeOverrides(p[Keys.OVERRIDES]).toMutableMap()
+        editTv { tv ->
+            val all = tv.overrides.toMutableMap()
             val mine = all[profile.id].orEmpty().toMutableMap()
             if (code == profile.codes[key]) {
                 mine.remove(key.name)
@@ -100,31 +183,73 @@ class SettingsRepository(context: Context) {
                 mine[key.name] = code?.let(::formatHexCode) ?: ""
             }
             all[profile.id] = mine
-            p[Keys.OVERRIDES] = encodeOverrides(all)
+            tv.copy(overrides = all)
         }
     }
 
-    /** Restaurar valores de fábrica del perfil. */
+    /** Restaurar valores de fábrica del perfil (solo en la tele elegida). */
     suspend fun resetProfile(profileId: String) {
-        store.edit { p ->
-            val all = decodeOverrides(p[Keys.OVERRIDES]).toMutableMap()
-            all.remove(profileById(profileId).id)
-            p[Keys.OVERRIDES] = encodeOverrides(all)
-        }
+        editTv { tv -> tv.copy(overrides = tv.overrides - profileById(profileId).id) }
     }
 
+    /** Importa un archivo de configuración en la tele elegida. */
     suspend fun applyImport(config: ImportedConfig) {
         val profile = profileById(config.profileId)
-        store.edit { p ->
-            val all = decodeOverrides(p[Keys.OVERRIDES]).toMutableMap()
+        editTv { tv ->
             val mine = HashMap<String, String>()
             for ((key, code) in config.codes) {
                 if (code != profile.codes[key]) mine[key.name] = code?.let(::formatHexCode) ?: ""
             }
-            all[profile.id] = mine
-            p[Keys.PROFILE] = profile.id
-            p[Keys.OVERRIDES] = encodeOverrides(all)
-            p[Keys.HIDDEN_APPS] = config.hiddenApps.map { it.name }.toSet()
+            tv.copy(
+                profileId = profile.id,
+                overrides = tv.overrides + (profile.id to mine),
+                hiddenApps = config.hiddenApps,
+            )
         }
+    }
+}
+
+private fun encodeTvs(tvs: List<TvConfig>): String {
+    val array = JSONArray()
+    for (tv in tvs) {
+        val hidden = JSONArray()
+        tv.hiddenApps.sortedBy { it.ordinal }.forEach { hidden.put(it.name) }
+        array.put(
+            JSONObject()
+                .put("id", tv.id)
+                .put("nombre", tv.name)
+                .put("perfil", tv.profileId)
+                .put("codigos", JSONObject(encodeOverrides(tv.overrides)))
+                .put("appsOcultas", hidden),
+        )
+    }
+    return array.toString()
+}
+
+/** null si no hay teles guardadas todavía (o el dato está dañado). */
+private fun decodeTvs(text: String?): List<TvConfig>? {
+    if (text.isNullOrBlank()) return null
+    return try {
+        val array = JSONArray(text)
+        val tvs = (0 until array.length()).mapNotNull { i ->
+            val obj = array.optJSONObject(i) ?: return@mapNotNull null
+            val hidden = obj.optJSONArray("appsOcultas")
+            TvConfig(
+                id = obj.optString("id").ifEmpty { UUID.randomUUID().toString() },
+                name = obj.optString("nombre").ifEmpty { "Tele ${i + 1}" },
+                profileId = profileById(obj.optString("perfil")).id,
+                overrides = decodeOverrides(obj.optJSONObject("codigos")?.toString()),
+                hiddenApps = if (hidden == null) {
+                    DEFAULT_HIDDEN_APPS
+                } else {
+                    (0 until hidden.length())
+                        .mapNotNull { j -> APP_KEYS.firstOrNull { it.name == hidden.optString(j) } }
+                        .toSet()
+                },
+            )
+        }
+        tvs.ifEmpty { null }
+    } catch (e: JSONException) {
+        null
     }
 }

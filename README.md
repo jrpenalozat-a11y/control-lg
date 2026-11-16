@@ -18,6 +18,14 @@ WhatsApp, Bluetooth o Quick Share, sin internet.
 
 ## Qué trae
 
+- **Varias teles en un solo control**: arriba se elige cuál manejar («LG cocina», «TV Pipi pieza»…).
+  Cada tele guarda su perfil, sus códigos y sus botones de apps. Se agregan, renombran y borran en
+  Configuración → Mis teles.
+- Botones de Netflix, Prime Video, Disney+, YouTube, Max y Spotify (ocultables por tele).
+- **Buscador de código** en el Editor: prueba uno por uno los 256 códigos de una marca hasta que la
+  tele responde, y lo guarda en ese botón. Sirve para las apps sin código de fábrica y para teles
+  de otra marca (la AOC 32S5295 de la pieza parte con el perfil «Otra marca», sin códigos).
+
 - Control completo: encendido, entrada, cruceta con OK, volumen y canal (se repiten al mantener
   presionado), Atrás/Home/Salir, apps, ajustes de la tele y teclado numérico desplegable.
 - Perfiles de códigos: «LG estándar (2008 en adelante)» y «LG alternativo» (Encender y Apagar por separado).

@@ -27,6 +27,8 @@ enum class RemoteKey(val label: String) {
     PRIME("Prime Video"),
     DISNEY("Disney+"),
     YOUTUBE("YouTube"),
+    MAX("Max"),
+    SPOTIFY("Spotify"),
     NUM_1("1"),
     NUM_2("2"),
     NUM_3("3"),
@@ -40,10 +42,13 @@ enum class RemoteKey(val label: String) {
 }
 
 /** Botones de apps: se pueden ocultar desde Configuración. */
-val APP_KEYS = listOf(RemoteKey.NETFLIX, RemoteKey.PRIME, RemoteKey.DISNEY, RemoteKey.YOUTUBE)
+val APP_KEYS = listOf(
+    RemoteKey.NETFLIX, RemoteKey.PRIME, RemoteKey.DISNEY,
+    RemoteKey.YOUTUBE, RemoteKey.MAX, RemoteKey.SPOTIFY,
+)
 
-/** Apps ocultas mientras el usuario no decida otra cosa (no traen código de fábrica). */
-val DEFAULT_HIDDEN_APPS = setOf(RemoteKey.DISNEY, RemoteKey.YOUTUBE)
+/** Todas las apps visibles de partida; las que no tengan código avisan al tocarlas. */
+val DEFAULT_HIDDEN_APPS = emptySet<RemoteKey>()
 
 val NUMBER_KEYS = listOf(
     RemoteKey.NUM_1, RemoteKey.NUM_2, RemoteKey.NUM_3,
@@ -74,6 +79,8 @@ private val STANDARD_CODES: Map<RemoteKey, Long?> = linkedMapOf(
     RemoteKey.PRIME to 0x20DF3AC5L,
     RemoteKey.DISNEY to null,
     RemoteKey.YOUTUBE to null,
+    RemoteKey.MAX to null,
+    RemoteKey.SPOTIFY to null,
     RemoteKey.NUM_1 to 0x20DF8877L,
     RemoteKey.NUM_2 to 0x20DF48B7L,
     RemoteKey.NUM_3 to 0x20DFC837L,
@@ -109,6 +116,10 @@ data class CodeProfile(
 
 const val PROFILE_STANDARD = "lg_estandar"
 const val PROFILE_ALT = "lg_alternativo"
+const val PROFILE_BLANK = "por_configurar"
+
+/** Mismos botones que LG estándar, todos sin código: para teles de otra marca (p. ej. AOC). */
+private val BLANK_CODES: Map<RemoteKey, Long?> = STANDARD_CODES.mapValues { null }
 
 val PROFILES = listOf(
     CodeProfile(
@@ -125,6 +136,16 @@ val PROFILES = listOf(
         codes = ALT_CODES,
         testKeys = listOf(RemoteKey.POWER_ON, RemoteKey.POWER_OFF),
     ),
+    CodeProfile(
+        id = PROFILE_BLANK,
+        name = "Otra marca (AOC u otra)",
+        description = "Sin códigos de fábrica: se agregan con el Buscador del Editor de códigos.",
+        codes = BLANK_CODES,
+        testKeys = emptyList(),
+    ),
 )
+
+/** Perfiles que el asistente «Probar mi tele» puede probar (tienen códigos de fábrica). */
+val WIZARD_PROFILES = PROFILES.filter { p -> p.testKeys.isNotEmpty() && p.testKeys.all { p.codes[it] != null } }
 
 fun profileById(id: String?): CodeProfile = PROFILES.firstOrNull { it.id == id } ?: PROFILES.first()

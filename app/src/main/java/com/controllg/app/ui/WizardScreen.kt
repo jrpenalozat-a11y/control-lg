@@ -26,7 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.controllg.app.PROFILES
+import com.controllg.app.WIZARD_PROFILES
 import com.controllg.app.RemoteKey
 import kotlinx.coroutines.launch
 
@@ -56,10 +56,10 @@ fun WizardScreen(
     ) {
         Header(title = "Probar mi tele", onBack = if (firstRun) null else onCancel)
 
-        if (index < PROFILES.size) {
-            val profile = PROFILES[index]
+        if (index < WIZARD_PROFILES.size) {
+            val profile = WIZARD_PROFILES[index]
             Text(
-                "Paso ${index + 1} de ${PROFILES.size}",
+                "Paso ${index + 1} de ${WIZARD_PROFILES.size}",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,

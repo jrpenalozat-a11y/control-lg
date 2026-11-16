@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -46,12 +48,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.controllg.app.APP_KEYS
 import com.controllg.app.NUMBER_KEYS
 import com.controllg.app.RemoteKey
+import com.controllg.app.TvConfig
 
 @Composable
 fun RemoteScreen(
@@ -60,6 +64,9 @@ fun RemoteScreen(
     onSend: suspend (RemoteKey) -> Unit,
     onOpenSettings: () -> Unit,
     onShare: () -> Unit,
+    tvs: List<TvConfig>,
+    selectedTvId: String,
+    onSelectTv: (String) -> Unit,
 ) {
     var showNumbers by rememberSaveable { mutableStateOf(false) }
     val press: (RemoteKey) -> (suspend () -> Unit) = { key -> suspend { onSend(key) } }
@@ -89,6 +96,8 @@ fun RemoteScreen(
                 )
             }
         }
+
+        if (tvs.size > 1) TvSelector(tvs, selectedTvId, onSelectTv)
 
         // Encendido y entrada
         Row(
@@ -250,7 +259,48 @@ private fun shortcutColor(key: RemoteKey): Color = when (key) {
     RemoteKey.PRIME -> Color(0xFF146EB4)
     RemoteKey.DISNEY -> Color(0xFF1F3A93)
     RemoteKey.YOUTUBE -> Color(0xFFC4302B)
+    RemoteKey.MAX -> Color(0xFF4B2BB3)
+    RemoteKey.SPOTIFY -> Color(0xFF168D40)
     else -> Color(0xFF3A3E47)
+}
+
+/** Elegir qué tele se maneja: un botón por tele, la elegida resaltada. */
+@Composable
+private fun TvSelector(
+    tvs: List<TvConfig>,
+    selectedTvId: String,
+    onSelectTv: (String) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        tvs.forEach { tv ->
+            val selected = tv.id == selectedTvId
+            Box(
+                modifier = Modifier
+                    .widthIn(min = 140.dp)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(
+                        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                    )
+                    .selectable(selected = selected, role = Role.Tab, onClick = { onSelectTv(tv.id) })
+                    .padding(horizontal = 18.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = tv.name,
+                    fontSize = 16.sp,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
 }
 
 @Composable
