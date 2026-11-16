@@ -15,6 +15,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -115,7 +121,13 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
         ) {
             val settings = loaded
             if (!ir.hasEmitter) {
-                NoEmitterScreen()
+                NoEmitterScreen(
+                    onShare = {
+                        shareApp(context).onFailure { e ->
+                            notify("No se pudo compartir la app: ${e.message ?: e.javaClass.simpleName}")
+                        }
+                    },
+                )
             } else if (settings != null) {
                 val codes = remember(settings) { settings.effectiveCodes() }
                 val screen = chosenScreen ?: if (settings.wizardDone) Screen.REMOTE else Screen.WIZARD
@@ -190,7 +202,7 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
 }
 
 @Composable
-private fun NoEmitterScreen() {
+private fun NoEmitterScreen(onShare: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -216,5 +228,10 @@ private fun NoEmitterScreen() {
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Button(onClick = onShare) {
+            Icon(Icons.Filled.Share, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Compartir la app", fontSize = 16.sp)
+        }
     }
 }
