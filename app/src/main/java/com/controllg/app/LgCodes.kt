@@ -117,9 +117,30 @@ data class CodeProfile(
 const val PROFILE_STANDARD = "lg_estandar"
 const val PROFILE_ALT = "lg_alternativo"
 const val PROFILE_BLANK = "por_configurar"
+const val PROFILE_ROKU = "roku_tv"
 
 /** Mismos botones que LG estándar, todos sin código: para teles de otra marca (p. ej. AOC). */
 private val BLANK_CODES: Map<RemoteKey, Long?> = STANDARD_CODES.mapValues { null }
+
+/**
+ * Roku TV (TCL, Hisense, AOC Roku…): mismo formato NEC, dirección 57E3.
+ * Códigos grabados de un control Roku (github.com/warlock31415/Roku-Remote).
+ * Roku no tiene Entrada, canales ni números: quedan vacíos y se pueden buscar.
+ */
+private val ROKU_CODES: Map<RemoteKey, Long?> = BLANK_CODES + linkedMapOf(
+    RemoteKey.POWER to 0x57E3E817L,
+    RemoteKey.VOL_UP to 0x57E3F00FL,
+    RemoteKey.VOL_DOWN to 0x57E308F7L,
+    RemoteKey.MUTE to 0x57E304FBL,
+    RemoteKey.HOME to 0x57E3C03FL,
+    RemoteKey.UP to 0x57E39867L,
+    RemoteKey.DOWN to 0x57E3CC33L,
+    RemoteKey.LEFT to 0x57E37887L,
+    RemoteKey.RIGHT to 0x57E3B44BL,
+    RemoteKey.OK to 0x57E354ABL,
+    RemoteKey.BACK to 0x57E36699L,
+)
+
 
 val PROFILES = listOf(
     CodeProfile(
@@ -135,6 +156,13 @@ val PROFILES = listOf(
         description = "Agrega Encender y Apagar por separado (códigos discretos).",
         codes = ALT_CODES,
         testKeys = listOf(RemoteKey.POWER_ON, RemoteKey.POWER_OFF),
+    ),
+    CodeProfile(
+        id = PROFILE_ROKU,
+        name = "Roku TV",
+        description = "Teles con Roku (TCL, Hisense, AOC Roku…). Encender, volumen, flechas, OK, Atrás y Home.",
+        codes = ROKU_CODES,
+        testKeys = listOf(RemoteKey.POWER),
     ),
     CodeProfile(
         id = PROFILE_BLANK,

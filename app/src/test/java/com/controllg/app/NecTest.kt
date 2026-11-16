@@ -61,4 +61,25 @@ class NecTest {
         assertEquals(0x20DFA35CL, alternativo.codes[RemoteKey.POWER_OFF])
         assertEquals(estandar.codes[RemoteKey.VOL_UP], alternativo.codes[RemoteKey.VOL_UP])
     }
+
+    @Test
+    fun codigos_de_fabrica_tienen_comando_y_su_complemento() {
+        for (profile in PROFILES) {
+            for ((key, code) in profile.codes) {
+                if (code == null) continue
+                val command = (code shr 8) and 0xFF
+                val inverse = code and 0xFF
+                assertEquals("${profile.name} · ${key.label}", 0xFFL, command xor inverse)
+            }
+        }
+    }
+
+    @Test
+    fun roku_usa_direccion_57E3() {
+        val roku = profileById(PROFILE_ROKU)
+        assertEquals(0x57E3E817L, roku.codes[RemoteKey.POWER])
+        assertNull(roku.codes[RemoteKey.INPUT])
+        assert(WIZARD_PROFILES.any { it.id == PROFILE_ROKU })
+        assert(WIZARD_PROFILES.none { it.id == PROFILE_BLANK })
+    }
 }
