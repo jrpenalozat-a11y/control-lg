@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,3 +32,16 @@ jobs:
           name: control-lg-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Publicar en el enlace de descarga
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk ControlLG.apk
+          gh release delete ultima --yes --cleanup-tag || true
+          gh release create ultima ControlLG.apk \
+            --title "Control LG (última versión)" \
+            --notes "Descarga ControlLG.apk e instálalo en un celular con emisor infrarrojo." \
+            --target "$GITHUB_SHA" \
+            --latest

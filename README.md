@@ -7,6 +7,15 @@ Funciona sin wifi, sin internet y sin Bluetooth.
 - Protocolo NEC a 38 kHz (`Nec.kt`, con test unitario).
 - Códigos de fábrica en `LgCodes.kt`; también se editan dentro de la app.
 
+## Descargar
+
+Enlace directo a la última versión (se puede mandar a cualquiera):
+
+https://github.com/jrpenalozat-a11y/control-lg/releases/latest/download/ControlLG.apk
+
+Dentro de la app, el botón **Compartir** (arriba, al lado del engranaje) envía el APK por
+WhatsApp, Bluetooth o Quick Share, sin internet.
+
 ## Qué trae
 
 - Control completo: encendido, entrada, cruceta con OK, volumen y canal (se repiten al mantener
