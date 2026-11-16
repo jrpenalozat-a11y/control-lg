@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +59,7 @@ fun RemoteScreen(
     hiddenApps: Set<RemoteKey>,
     onSend: suspend (RemoteKey) -> Unit,
     onOpenSettings: () -> Unit,
+    onShare: () -> Unit,
 ) {
     var showNumbers by rememberSaveable { mutableStateOf(false) }
     val press: (RemoteKey) -> (suspend () -> Unit) = { key -> suspend { onSend(key) } }
@@ -72,6 +74,13 @@ fun RemoteScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Header(title = "Control LG") {
+            IconButton(onClick = onShare) {
+                Icon(
+                    Icons.Filled.Share,
+                    contentDescription = "Compartir la app",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     Icons.Filled.Settings,

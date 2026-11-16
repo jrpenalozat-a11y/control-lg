@@ -31,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -71,6 +72,7 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
     val loaded by repository.settings.collectAsState(initial = null)
     var chosenScreen by rememberSaveable { mutableStateOf<Screen?>(null) }
 
+    val context = LocalContext.current
     val view = LocalView.current
     val keepScreenOn = loaded?.keepScreenOn == true
     DisposableEffect(view, keepScreenOn) {
@@ -128,6 +130,11 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
                         hiddenApps = settings.hiddenApps,
                         onSend = { key -> sendCode(codes[key]) },
                         onOpenSettings = { chosenScreen = Screen.SETTINGS },
+                        onShare = {
+                            shareApp(context).onFailure { e ->
+                                notify("No se pudo compartir la app: ${e.message ?: e.javaClass.simpleName}")
+                            }
+                        },
                     )
 
                     Screen.SETTINGS -> SettingsScreen(
