@@ -49,6 +49,9 @@ import java.util.Locale
 fun EditorScreen(
     settings: AppSettings,
     codes: Map<RemoteKey, Long?>,
+    /** Botón cuyo Buscador se abre de inmediato (al tocar en el control un botón sin código). */
+    initialSearch: RemoteKey? = null,
+    onSearchClosed: () -> Unit = {},
     onSetCode: (RemoteKey, Long?) -> Unit,
     onReset: () -> Unit,
     onTest: suspend (Long?) -> Unit,
@@ -58,7 +61,7 @@ fun EditorScreen(
     var confirmReset by remember { mutableStateOf(false) }
     // Cambia al restaurar, para que los campos vuelvan a mostrar los valores de fábrica.
     var resetCount by remember { mutableIntStateOf(0) }
-    var searching by remember { mutableStateOf<RemoteKey?>(null) }
+    var searching by remember { mutableStateOf(initialSearch) }
 
     Column(
         modifier = Modifier
@@ -113,7 +116,10 @@ fun EditorScreen(
                 onSetCode(target, code)
                 resetCount++
             },
-            onDismiss = { searching = null },
+            onDismiss = {
+                searching = null
+                onSearchClosed()
+            },
         )
     }
 

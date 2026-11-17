@@ -124,6 +124,20 @@ def main(src, dst):
                 "codigos": codes,
             })
 
+    # Botones que le faltan a un control: se completan con otros controles de la misma
+    # «marca» de señal (mismo protocolo y dirección), usando el código más repetido.
+    from collections import Counter, defaultdict
+
+    def brand_of(protocol, code):
+        return code >> 16 if protocol in ("NEC", "SAMSUNG") else code >> 8
+
+    pool = defaultdict(lambda: defaultdict(Counter))
+    for s in sets:
+        b = (s["protocolo"], brand_of(s["protocolo"], s["codigos"]["POWER"]))
+        for k, v in s["codigos"].items():
+            if brand_of(s["protocolo"], v) == b[1]:
+                pool[b][k][v] += 1
+
     # Un control por señal de encendido; gana el que trae más botones.
     best = {}
     for s in sets:
@@ -135,6 +149,16 @@ def main(src, dst):
         b = s["marca"].lower()
         rank = next((i for i, p in enumerate(PRIORITY) if b.startswith(p)), len(PRIORITY))
         return (rank, b, -len(s["codigos"]))
+
+    for s in best.values():
+        b = (s["protocolo"], brand_of(s["protocolo"], s["codigos"]["POWER"]))
+        added = []
+        for k, counter in pool[b].items():
+            if k not in s["codigos"]:
+                s["codigos"][k] = counter.most_common(1)[0][0]
+                added.append(k)
+        if added:
+            s["completados"] = sorted(added)
 
     result = sorted(best.values(), key=order)
     for s in result:

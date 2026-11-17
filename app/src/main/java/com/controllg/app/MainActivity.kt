@@ -78,6 +78,8 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
     val snackbar = remember { SnackbarHostState() }
     val loaded by repository.settings.collectAsState(initial = null)
     var chosenScreen by rememberSaveable { mutableStateOf<Screen?>(null) }
+    // Botón sin código tocado en el control: se abre el Buscador para él y se vuelve al control.
+    var searchKey by rememberSaveable { mutableStateOf<RemoteKey?>(null) }
 
     val context = LocalContext.current
     val view = LocalView.current
@@ -134,14 +136,27 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
                 val screen = chosenScreen ?: if (settings.wizardDone) Screen.REMOTE else Screen.WIZARD
 
                 BackHandler(enabled = screen != Screen.REMOTE && settings.wizardDone) {
-                    chosenScreen = if (screen == Screen.SETTINGS) Screen.REMOTE else Screen.SETTINGS
+                    chosenScreen = when {
+                        screen == Screen.SETTINGS -> Screen.REMOTE
+                        screen == Screen.EDITOR && searchKey != null -> Screen.REMOTE
+                        else -> Screen.SETTINGS
+                    }
+                    searchKey = null
                 }
 
                 when (screen) {
                     Screen.REMOTE -> RemoteScreen(
                         codes = codes,
                         hiddenApps = settings.hiddenApps,
-                        onSend = { key -> sendCode(codes[key]) },
+                        onSend = { key ->
+                            val code = codes[key]
+                            if (code == null) {
+                                searchKey = key
+                                chosenScreen = Screen.EDITOR
+                            } else {
+                                sendCode(code)
+                            }
+                        },
                         onOpenSettings = { chosenScreen = Screen.SETTINGS },
                         onShare = {
                             shareApp(context).onFailure { e ->
@@ -183,6 +198,13 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
                     Screen.EDITOR -> EditorScreen(
                         settings = settings,
                         codes = codes,
+                        initialSearch = searchKey,
+                        onSearchClosed = {
+                            if (searchKey != null) {
+                                searchKey = null
+                                chosenScreen = Screen.REMOTE
+                            }
+                        },
                         onSetCode = { key, code ->
                             scope.launch { repository.setCode(settings.profileId, key, code) }
                         },
@@ -193,7 +215,10 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
                             }
                         },
                         onTest = { code -> sendCode(code) },
-                        onBack = { chosenScreen = Screen.SETTINGS },
+                        onBack = {
+                            chosenScreen = if (searchKey != null) Screen.REMOTE else Screen.SETTINGS
+                            searchKey = null
+                        },
                     )
 
                     Screen.WIZARD -> WizardScreen(
