@@ -38,7 +38,7 @@ data class TvConfig(
 /** Teles de partida: la LG de la cocina y la AOC de la pieza de Pipi. */
 val DEFAULT_TVS = listOf(
     TvConfig(id = "cocina", name = "LG cocina", profileId = PROFILE_STANDARD),
-    TvConfig(id = "pieza", name = "Pieza Pipi", profileId = PROFILE_TPV),
+    TvConfig(id = "pieza", name = "Pieza Pipi", profileId = PROFILE_AOC),
 )
 
 data class AppSettings(
@@ -275,8 +275,28 @@ private fun decodeTvs(text: String?): List<TvConfig>? {
                 foundRemote = obj.optString("controlEncontrado").ifEmpty { null },
             )
         }
-        tvs.ifEmpty { null }
+        tvs.map(::upgradeFoundAoc).ifEmpty { null }
     } catch (e: JSONException) {
         null
     }
+}
+
+/**
+ * Si la Búsqueda automática encontró el monitor Philips 22IT (misma señal 00BD que la AOC),
+ * se pasa al perfil completo «AOC Smart TV (TPV)», conservando los botones que el usuario guardó.
+ */
+private fun upgradeFoundAoc(tv: TvConfig): TvConfig {
+    if (tv.profileId != PROFILE_BLANK || tv.protocolOverride != IrProtocol.NEC) return tv
+    if (tv.foundRemote?.contains("Philips_22IT") != true) return tv
+    val aoc = profileById(PROFILE_AOC)
+    val mine = tv.overrides[PROFILE_BLANK].orEmpty().filter { (key, value) ->
+        val factory = RemoteKey.entries.firstOrNull { it.name == key }?.let { aoc.codes[it] }
+        value.isNotEmpty() && parseHexCode(value) != factory
+    }
+    return tv.copy(
+        profileId = PROFILE_AOC,
+        overrides = tv.overrides + (PROFILE_AOC to mine),
+        protocolOverride = null,
+        foundRemote = null,
+    )
 }

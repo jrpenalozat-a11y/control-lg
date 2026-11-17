@@ -99,7 +99,7 @@ class NecTest {
         val tpv = profileById(PROFILE_TPV)
         assertEquals(IrProtocol.RC6, tpv.protocol)
         assertEquals(0x0CL, tpv.codes[RemoteKey.POWER])
-        assertEquals(PROFILE_TPV, DEFAULT_TVS.first { it.id == "pieza" }.profileId)
+        assertEquals(PROFILE_AOC, DEFAULT_TVS.first { it.id == "pieza" }.profileId)
     }
 
     @Test
@@ -129,5 +129,13 @@ class NecTest {
         assert(sets.any { it.protocol == IrProtocol.NEC && it.power == 0x20DF10EFL })
         assert(sets.any { it.protocol == IrProtocol.NEC && it.power == 0x57E3E817L })
         assert(sets.all { RemoteKey.POWER in it.codes })
+    }
+
+    @Test
+    fun aoc_00bd_coincide_con_el_monitor_philips_de_la_base() {
+        val aoc = profileById(PROFILE_AOC)
+        val sets = parseCodeSets(java.io.File("src/main/assets/teles_ir.json").readText())
+        val philips = sets.first { it.model.contains("Philips_22IT") }
+        for ((key, code) in philips.codes) assertEquals(key.label, aoc.codes[key], code)
     }
 }

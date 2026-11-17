@@ -120,6 +120,7 @@ const val PROFILE_ALT = "lg_alternativo"
 const val PROFILE_BLANK = "por_configurar"
 const val PROFILE_ROKU = "roku_tv"
 const val PROFILE_TPV = "aoc_philips_rc6"
+const val PROFILE_AOC = "aoc_tpv_00bd"
 
 /** Mismos botones que LG estándar, todos sin código: para teles de otra marca (p. ej. AOC). */
 private val BLANK_CODES: Map<RemoteKey, Long?> = STANDARD_CODES.mapValues { null }
@@ -141,6 +142,40 @@ private val ROKU_CODES: Map<RemoteKey, Long?> = BLANK_CODES + linkedMapOf(
     RemoteKey.RIGHT to 0x57E3B44BL,
     RemoteKey.OK to 0x57E354ABL,
     RemoteKey.BACK to 0x57E36699L,
+)
+
+/**
+ * AOC Smart TV (fábrica TPV), NEC con dirección 00BD. Coinciden entre sí los controles de la base
+ * Flipper-IRDB con esa dirección: monitor Philips 22IT, Hannspree TV-NEC-0-189, Bush LT32M1CA,
+ * AOC 0_189 (números, menú, encendido) y proyector Apeman (Atrás). La AOC 32S5295 de la pieza
+ * responde a este encendido. Home y apps no aparecen en esos controles: se buscan con «Explorar».
+ */
+private val AOC_CODES: Map<RemoteKey, Long?> = BLANK_CODES + linkedMapOf(
+    RemoteKey.POWER to 0x00BD807FL,
+    RemoteKey.VOL_UP to 0x00BD30CFL,
+    RemoteKey.VOL_DOWN to 0x00BD08F7L,
+    RemoteKey.MUTE to 0x00BD20DFL,
+    RemoteKey.CH_UP to 0x00BD18E7L,
+    RemoteKey.CH_DOWN to 0x00BD38C7L,
+    RemoteKey.INPUT to 0x00BD10EFL,
+    RemoteKey.SETTINGS to 0x00BD50AFL,
+    RemoteKey.UP to 0x00BDD02FL,
+    RemoteKey.DOWN to 0x00BDF00FL,
+    RemoteKey.LEFT to 0x00BD926DL,
+    RemoteKey.RIGHT to 0x00BD52ADL,
+    RemoteKey.OK to 0x00BDB04FL,
+    RemoteKey.EXIT to 0x00BDE01FL,
+    RemoteKey.BACK to 0x00BD2AD5L,
+    RemoteKey.NUM_1 to 0x00BDA857L,
+    RemoteKey.NUM_2 to 0x00BD6897L,
+    RemoteKey.NUM_3 to 0x00BDE817L,
+    RemoteKey.NUM_4 to 0x00BD9867L,
+    RemoteKey.NUM_5 to 0x00BD58A7L,
+    RemoteKey.NUM_6 to 0x00BDD827L,
+    RemoteKey.NUM_7 to 0x00BDB847L,
+    RemoteKey.NUM_8 to 0x00BD7887L,
+    RemoteKey.NUM_9 to 0x00BDF807L,
+    RemoteKey.NUM_0 to 0x00BD827DL,
 )
 
 /**
@@ -201,6 +236,13 @@ val PROFILES = listOf(
         name = "Roku TV",
         description = "Teles con Roku (TCL, Hisense, AOC Roku…). Encender, volumen, flechas, OK, Atrás y Home.",
         codes = ROKU_CODES,
+        testKeys = listOf(RemoteKey.POWER),
+    ),
+    CodeProfile(
+        id = PROFILE_AOC,
+        name = "AOC Smart TV (TPV)",
+        description = "AOC con menú «Configuración» (p. ej. 32S5295). Encender, volumen, canales, flechas, OK, menú y números.",
+        codes = AOC_CODES,
         testKeys = listOf(RemoteKey.POWER),
     ),
     CodeProfile(

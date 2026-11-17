@@ -23,7 +23,7 @@ WhatsApp, Bluetooth o Quick Share, sin internet.
 - **Varias teles en un solo control**: arriba se elige cuál manejar («LG cocina», «Pieza Pipi»…).
   Cada tele guarda su perfil, sus códigos y sus botones de apps. Se agregan, renombran y borran en
   Configuración → Mis teles.
-- Perfiles: LG estándar, LG alternativo, **Roku TV** (TCL, Hisense, AOC Roku…), **AOC / Philips (RC6)** (Smart TV AOC y Philips latinoamericanas, fabricadas por TPV) y «Otra marca» (vacío).
+- Perfiles: LG estándar, LG alternativo, **AOC Smart TV (TPV, señal 00BD)**, **Roku TV** (TCL, Hisense, AOC Roku…), **AOC / Philips (RC6)** (Smart TV AOC y Philips latinoamericanas, fabricadas por TPV) y «Otra marca» (vacío).
 - Botones de Netflix, Prime Video, Disney+, YouTube, Max y Spotify (ocultables por tele).
 - **Búsqueda automática** (Configuración): como un control universal, prueba el botón de encendido
   de 61 controles de distintas marcas (AOC y Philips primero) hasta que la tele se apaga, y guarda
