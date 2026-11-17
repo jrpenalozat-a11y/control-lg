@@ -62,6 +62,7 @@ fun SettingsScreen(
     onOpenEditor: () -> Unit,
     onOpenWizard: () -> Unit,
     onOpenAutoSearch: () -> Unit,
+    onOpenExplore: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -170,6 +171,9 @@ fun SettingsScreen(
         }
         Button(onClick = onOpenAutoSearch, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text("Búsqueda automática (tele de otra marca)")
+        }
+        Button(onClick = onOpenExplore, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+            Text("Explorar códigos (encontrar varios botones)")
         }
         OutlinedButton(onClick = onOpenEditor, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text("Editor de códigos")

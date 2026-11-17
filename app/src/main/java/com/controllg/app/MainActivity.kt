@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.controllg.app.ui.AutoSearchScreen
 import com.controllg.app.ui.ControlLgTheme
 import com.controllg.app.ui.EditorScreen
+import com.controllg.app.ui.ExploreScreen
 import com.controllg.app.ui.PowerIcon
 import com.controllg.app.ui.RemoteScreen
 import com.controllg.app.ui.SettingsScreen
@@ -70,7 +71,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class Screen { REMOTE, SETTINGS, EDITOR, WIZARD, AUTOSEARCH }
+private enum class Screen { REMOTE, SETTINGS, EDITOR, WIZARD, AUTOSEARCH, EXPLORE }
 
 @Composable
 private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
@@ -176,6 +177,18 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
                         onOpenEditor = { chosenScreen = Screen.EDITOR },
                         onOpenWizard = { chosenScreen = Screen.WIZARD },
                         onOpenAutoSearch = { chosenScreen = Screen.AUTOSEARCH },
+                        onOpenExplore = { chosenScreen = Screen.EXPLORE },
+                    )
+
+                    Screen.EXPLORE -> ExploreScreen(
+                        tvName = settings.tv.name,
+                        protocol = settings.protocol,
+                        codes = codes,
+                        onTest = { code -> sendCode(code) },
+                        onSetCode = { key, code ->
+                            scope.launch { repository.setCode(settings.profileId, key, code) }
+                        },
+                        onBack = { chosenScreen = Screen.SETTINGS },
                     )
 
                     Screen.AUTOSEARCH -> {

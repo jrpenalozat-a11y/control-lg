@@ -296,7 +296,7 @@ private fun CodeFinderDialog(
                         prefixText = input.filter { it.isLetterOrDigit() }.take(4).uppercase()
                     },
                     label = { Text("Marca (4 primeros dígitos)") },
-                    supportingText = { Text(if (prefix == null) "Deben ser 4 dígitos hexadecimales" else "LG usa 20DF · Roku 57E3 · AOC/Philips 0000") },
+                    supportingText = { Text(if (prefix == null) "Deben ser 4 dígitos hexadecimales" else "Viene con la marca de tu tele: no lo cambies") },
                     isError = prefix == null,
                     singleLine = true,
                     textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 16.sp),
