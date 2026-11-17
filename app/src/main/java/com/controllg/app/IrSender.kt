@@ -7,7 +7,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-/** Envía códigos NEC por el emisor infrarrojo del celular. No usa red ni Bluetooth. */
+/** Envía códigos (NEC o RC6) por el emisor infrarrojo del celular. No usa red ni Bluetooth. */
 class IrSender(context: Context) {
 
     private val manager: ConsumerIrManager? =
@@ -20,12 +20,17 @@ class IrSender(context: Context) {
     }
 
     private val mutex = Mutex()
+    private var rc6Toggle = false
 
-    suspend fun send(code: Long): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun send(code: Long, protocol: IrProtocol = IrProtocol.NEC): Result<Unit> = withContext(Dispatchers.IO) {
         mutex.withLock {
             try {
                 val ir = manager ?: throw IllegalStateException("Sin emisor infrarrojo")
-                ir.transmit(NEC_CARRIER_HZ, encodeNec(code))
+                val pattern = when (protocol) {
+                    IrProtocol.NEC -> encodeNec(code)
+                    IrProtocol.RC6 -> encodeRc6(code, rc6Toggle).also { rc6Toggle = !rc6Toggle }
+                }
+                ir.transmit(protocol.carrierHz, pattern)
                 Result.success(Unit)
             } catch (e: Exception) {
                 Result.failure(e)

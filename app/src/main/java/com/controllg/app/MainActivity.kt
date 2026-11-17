@@ -95,12 +95,12 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
         }
     }
 
-    suspend fun sendCode(code: Long?) {
+    suspend fun sendCode(code: Long?, protocol: IrProtocol = loaded?.profile?.protocol ?: IrProtocol.NEC) {
         if (code == null) {
             notify("Este botón no tiene código. Agrégalo en Configuración → Editor de códigos.", replace = false)
             return
         }
-        ir.send(code).onFailure { e ->
+        ir.send(code, protocol).onFailure { e ->
             notify(
                 "No se pudo enviar la señal infrarroja: ${e.message ?: e.javaClass.simpleName}",
                 replace = false,
@@ -179,7 +179,7 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
 
                     Screen.WIZARD -> WizardScreen(
                         firstRun = !settings.wizardDone,
-                        onSend = { code -> sendCode(code) },
+                        onSend = { code, protocol -> sendCode(code, protocol) },
                         onFinish = { profileId ->
                             scope.launch {
                                 if (profileId != null) repository.setProfile(profileId)

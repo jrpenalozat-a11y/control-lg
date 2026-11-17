@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.controllg.app.AppSettings
+import com.controllg.app.IrProtocol
 import com.controllg.app.RemoteKey
 import com.controllg.app.formatHexCode
 import com.controllg.app.parseHexCode
@@ -103,6 +104,7 @@ fun EditorScreen(
         CodeFinderDialog(
             target = target,
             codes = codes,
+            protocol = profile.protocol,
             onTest = onTest,
             onSave = { code ->
                 onSetCode(target, code)
@@ -214,6 +216,7 @@ private fun CodeRow(
 private fun CodeFinderDialog(
     target: RemoteKey,
     codes: Map<RemoteKey, Long?>,
+    protocol: IrProtocol,
     onTest: suspend (Long?) -> Unit,
     onSave: (Long) -> Unit,
     onDismiss: () -> Unit,
@@ -222,14 +225,21 @@ private fun CodeFinderDialog(
     val known = remember(codes) { codes.values.filterNotNull().toSet() }
     val defaultPrefix = remember(codes) {
         val base = codes[RemoteKey.POWER] ?: codes.values.firstOrNull { it != null }
-        String.format(Locale.ROOT, "%04X", ((base ?: 0x20DF0000L) shr 16) and 0xFFFF)
+        val brand = when (protocol) {
+            IrProtocol.NEC -> ((base ?: 0x20DF0000L) shr 16) and 0xFFFF
+            IrProtocol.RC6 -> ((base ?: 0L) shr 8) and 0xFF
+        }
+        String.format(Locale.ROOT, "%04X", brand)
     }
     var prefixText by remember { mutableStateOf(defaultPrefix) }
     val prefix = prefixText.takeIf { it.length == 4 }?.toLongOrNull(16)
     // Posición dentro de los 256 comandos; -1 = todavía no se envía ninguno.
     var index by remember(prefix) { mutableIntStateOf(-1) }
 
-    fun candidate(i: Int): Long = ((prefix ?: 0L) shl 16) or (i.toLong() shl 8) or (i.inv().toLong() and 0xFF)
+    fun candidate(i: Int): Long = when (protocol) {
+        IrProtocol.NEC -> ((prefix ?: 0L) shl 16) or (i.toLong() shl 8) or (i.inv().toLong() and 0xFF)
+        IrProtocol.RC6 -> (((prefix ?: 0L) and 0xFF) shl 8) or i.toLong()
+    }
 
     /** Siguiente comando que no sea de otro botón (así no se apaga la tele por error). */
     fun next(from: Int): Int {
@@ -258,7 +268,7 @@ private fun CodeFinderDialog(
                         prefixText = input.filter { it.isLetterOrDigit() }.take(4).uppercase()
                     },
                     label = { Text("Marca (4 primeros dígitos)") },
-                    supportingText = { Text(if (prefix == null) "Deben ser 4 dígitos hexadecimales" else "LG usa 20DF") },
+                    supportingText = { Text(if (prefix == null) "Deben ser 4 dígitos hexadecimales" else "LG usa 20DF · Roku 57E3 · AOC/Philips 0000") },
                     isError = prefix == null,
                     singleLine = true,
                     textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 16.sp),

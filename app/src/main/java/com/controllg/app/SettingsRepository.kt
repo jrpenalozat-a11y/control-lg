@@ -34,7 +34,7 @@ data class TvConfig(
 /** Teles de partida: la LG de la cocina y la AOC de la pieza de Pipi. */
 val DEFAULT_TVS = listOf(
     TvConfig(id = "cocina", name = "LG cocina", profileId = PROFILE_STANDARD),
-    TvConfig(id = "pieza", name = "Pieza Pipi", profileId = PROFILE_BLANK),
+    TvConfig(id = "pieza", name = "Pieza Pipi", profileId = PROFILE_TPV),
 )
 
 data class AppSettings(

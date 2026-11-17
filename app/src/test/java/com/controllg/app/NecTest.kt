@@ -64,7 +64,7 @@ class NecTest {
 
     @Test
     fun codigos_de_fabrica_tienen_comando_y_su_complemento() {
-        for (profile in PROFILES) {
+        for (profile in PROFILES.filter { it.protocol == IrProtocol.NEC }) {
             for ((key, code) in profile.codes) {
                 if (code == null) continue
                 val command = (code shr 8) and 0xFF
@@ -81,5 +81,24 @@ class NecTest {
         assertNull(roku.codes[RemoteKey.INPUT])
         assert(WIZARD_PROFILES.any { it.id == PROFILE_ROKU })
         assert(WIZARD_PROFILES.none { it.id == PROFILE_BLANK })
+    }
+
+    @Test
+    fun rc6_encendido_aoc_philips() {
+        val p = encodeRc6(0x0CL, toggle = false)
+        assertEquals(2664, p[0]) // cabecera
+        // Duración total fija: cabecera + inicio + 3 bits de modo + bit doble + 16 bits.
+        assertEquals(2664 + 888 + 888 + 3 * 888 + 1776 + 16 * 888, p.sum())
+        assert(p.size % 2 == 1) // empieza y termina encendido
+        val otro = encodeRc6(0x0CL, toggle = true)
+        assert(!p.contentEquals(otro))
+    }
+
+    @Test
+    fun perfil_aoc_usa_rc6() {
+        val tpv = profileById(PROFILE_TPV)
+        assertEquals(IrProtocol.RC6, tpv.protocol)
+        assertEquals(0x0CL, tpv.codes[RemoteKey.POWER])
+        assertEquals(PROFILE_TPV, DEFAULT_TVS.first { it.id == "pieza" }.profileId)
     }
 }

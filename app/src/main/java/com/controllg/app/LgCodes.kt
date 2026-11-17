@@ -112,12 +112,14 @@ data class CodeProfile(
     val codes: Map<RemoteKey, Long?>,
     /** Botones que envía el asistente «Probar mi tele». */
     val testKeys: List<RemoteKey>,
+    val protocol: IrProtocol = IrProtocol.NEC,
 )
 
 const val PROFILE_STANDARD = "lg_estandar"
 const val PROFILE_ALT = "lg_alternativo"
 const val PROFILE_BLANK = "por_configurar"
 const val PROFILE_ROKU = "roku_tv"
+const val PROFILE_TPV = "aoc_philips_rc6"
 
 /** Mismos botones que LG estándar, todos sin código: para teles de otra marca (p. ej. AOC). */
 private val BLANK_CODES: Map<RemoteKey, Long?> = STANDARD_CODES.mapValues { null }
@@ -139,6 +141,43 @@ private val ROKU_CODES: Map<RemoteKey, Long?> = BLANK_CODES + linkedMapOf(
     RemoteKey.RIGHT to 0x57E3B44BL,
     RemoteKey.OK to 0x57E354ABL,
     RemoteKey.BACK to 0x57E36699L,
+)
+
+/**
+ * AOC / Philips latinoamericanas (TPV), protocolo RC6, dirección 0: código = comando.
+ * Tomados del control Philips 50PUT6103/79 y series 7956/OLED806 (Flipper-IRDB).
+ * La AOC 32S5295 es de la misma fábrica; si algún botón no responde, se busca en el Editor.
+ */
+private val TPV_CODES: Map<RemoteKey, Long?> = BLANK_CODES + linkedMapOf(
+    RemoteKey.POWER to 0x0CL,
+    RemoteKey.VOL_UP to 0x10L,
+    RemoteKey.VOL_DOWN to 0x11L,
+    RemoteKey.MUTE to 0x0DL,
+    RemoteKey.CH_UP to 0x20L,
+    RemoteKey.CH_DOWN to 0x21L,
+    RemoteKey.INPUT to 0x38L,
+    RemoteKey.HOME to 0x54L,
+    RemoteKey.SETTINGS to 0xBFL,
+    RemoteKey.UP to 0x58L,
+    RemoteKey.DOWN to 0x59L,
+    RemoteKey.LEFT to 0x5AL,
+    RemoteKey.RIGHT to 0x5BL,
+    RemoteKey.OK to 0x5CL,
+    RemoteKey.BACK to 0x0AL,
+    RemoteKey.EXIT to 0x9FL,
+    RemoteKey.NETFLIX to 0x76L,
+    RemoteKey.PRIME to 0xBAL,
+    RemoteKey.YOUTUBE to 0x79L,
+    RemoteKey.NUM_1 to 0x01L,
+    RemoteKey.NUM_2 to 0x02L,
+    RemoteKey.NUM_3 to 0x03L,
+    RemoteKey.NUM_4 to 0x04L,
+    RemoteKey.NUM_5 to 0x05L,
+    RemoteKey.NUM_6 to 0x06L,
+    RemoteKey.NUM_7 to 0x07L,
+    RemoteKey.NUM_8 to 0x08L,
+    RemoteKey.NUM_9 to 0x09L,
+    RemoteKey.NUM_0 to 0x00L,
 )
 
 
@@ -163,6 +202,14 @@ val PROFILES = listOf(
         description = "Teles con Roku (TCL, Hisense, AOC Roku…). Encender, volumen, flechas, OK, Atrás y Home.",
         codes = ROKU_CODES,
         testKeys = listOf(RemoteKey.POWER),
+    ),
+    CodeProfile(
+        id = PROFILE_TPV,
+        name = "AOC / Philips (RC6)",
+        description = "Smart TV AOC y Philips de Latinoamérica (fabricadas por TPV). Otro tipo de señal.",
+        codes = TPV_CODES,
+        testKeys = listOf(RemoteKey.POWER),
+        protocol = IrProtocol.RC6,
     ),
     CodeProfile(
         id = PROFILE_BLANK,

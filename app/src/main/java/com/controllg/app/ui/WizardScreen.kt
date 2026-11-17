@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.controllg.app.IrProtocol
 import com.controllg.app.WIZARD_PROFILES
 import com.controllg.app.RemoteKey
 import kotlinx.coroutines.launch
@@ -37,7 +38,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun WizardScreen(
     firstRun: Boolean,
-    onSend: suspend (Long?) -> Unit,
+    onSend: suspend (Long?, IrProtocol) -> Unit,
     /** Perfil que funcionó, o null para seguir con el que ya estaba. */
     onFinish: (String?) -> Unit,
     onCancel: () -> Unit,
@@ -83,7 +84,7 @@ fun WizardScreen(
                 Button(
                     onClick = {
                         sent = true
-                        scope.launch { onSend(profile.codes[key]) }
+                        scope.launch { onSend(profile.codes[key], profile.protocol) }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
