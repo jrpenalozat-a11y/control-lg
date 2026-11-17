@@ -80,7 +80,7 @@ fun RemoteScreen(
         verticalArrangement = Arrangement.spacedBy(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Header(title = "Control LG") {
+        Header(title = "Control Casa") {
             IconButton(onClick = onShare) {
                 Icon(
                     Icons.Filled.Share,

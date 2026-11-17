@@ -1,4 +1,6 @@
-# Control LG
+# Control Casa
+
+(Antes «Control LG».)
 
 Control remoto infrarrojo para televisores LG, usando el emisor IR del celular.
 Funciona sin wifi, sin internet y sin Bluetooth.
@@ -11,7 +13,7 @@ Funciona sin wifi, sin internet y sin Bluetooth.
 
 Enlace directo a la última versión (se puede mandar a cualquiera):
 
-https://github.com/jrpenalozat-a11y/control-lg/releases/latest/download/ControlLG.apk
+https://github.com/jrpenalozat-a11y/control-lg/releases/latest/download/ControlCasa.apk
 
 Dentro de la app, el botón **Compartir** (arriba, al lado del engranaje) envía el APK por
 WhatsApp, Bluetooth o Quick Share, sin internet.

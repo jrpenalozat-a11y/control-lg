@@ -12,7 +12,7 @@ import java.io.File
  */
 fun shareApp(context: Context): Result<Unit> = runCatching {
     val dir = File(context.cacheDir, "compartir").apply { mkdirs() }
-    val apk = File(dir, "ControlLG.apk")
+    val apk = File(dir, "ControlCasa.apk")
     File(context.applicationInfo.sourceDir).copyTo(apk, overwrite = true)
 
     val uri = FileProvider.getUriForFile(context, "${context.packageName}.files", apk)
@@ -21,13 +21,13 @@ fun shareApp(context: Context): Result<Unit> = runCatching {
         putExtra(Intent.EXTRA_STREAM, uri)
         putExtra(
             Intent.EXTRA_TEXT,
-            "Control LG: control remoto infrarrojo para teles LG. " +
+            "Control Casa: control remoto infrarrojo para las teles de la casa (LG, Roku y otras). " +
                 "Instala el APK adjunto (necesita un celular con emisor infrarrojo).",
         )
-        clipData = ClipData.newRawUri("ControlLG.apk", uri)
+        clipData = ClipData.newRawUri("ControlCasa.apk", uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
-    val chooser = Intent.createChooser(send, "Compartir Control LG").apply {
+    val chooser = Intent.createChooser(send, "Compartir Control Casa").apply {
         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
     context.startActivity(chooser)

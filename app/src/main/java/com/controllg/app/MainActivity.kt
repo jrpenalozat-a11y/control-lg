@@ -223,7 +223,7 @@ private fun NoEmitterScreen(onShare: () -> Unit) {
             color = MaterialTheme.colorScheme.onBackground,
         )
         Text(
-            text = "Control LG necesita el emisor infrarrojo (IR) del teléfono para manejar la tele. " +
+            text = "Control Casa necesita el emisor infrarrojo (IR) del teléfono para manejar la tele. " +
                 "Lo traen, por ejemplo, muchos Xiaomi, Redmi, POCO y Huawei. " +
                 "Este teléfono no lo tiene, así que la app no puede enviar señales desde aquí.",
             fontSize = 16.sp,

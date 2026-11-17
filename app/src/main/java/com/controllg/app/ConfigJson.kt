@@ -20,7 +20,7 @@ fun exportConfigJson(settings: AppSettings): String {
     val ocultas = JSONArray()
     settings.hiddenApps.sortedBy { it.ordinal }.forEach { ocultas.put(it.name) }
     return JSONObject()
-        .put("app", "Control LG")
+        .put("app", "Control Casa")
         .put("version", 1)
         .put("perfil", settings.profileId)
         .put("codigos", codigos)
