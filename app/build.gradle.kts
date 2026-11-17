@@ -12,13 +12,28 @@ android {
         applicationId = "com.controllg.app"
         minSdk = 21
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
+    }
+
+    // Clave fija: así cada versión nueva se instala encima de la anterior sin desinstalar.
+    // Es una clave de uso personal (el proyecto es público); no sirve para Google Play.
+    signingConfigs {
+        create("fija") {
+            storeFile = file("control-lg.keystore")
+            storePassword = "controllg"
+            keyAlias = "controllg"
+            keyPassword = "controllg"
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("fija")
+        }
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("fija")
         }
     }
 
