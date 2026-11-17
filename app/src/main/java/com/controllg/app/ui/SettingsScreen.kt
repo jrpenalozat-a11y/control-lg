@@ -46,12 +46,9 @@ import com.controllg.app.PROFILES
 import com.controllg.app.PROFILE_STANDARD
 import com.controllg.app.TvConfig
 import com.controllg.app.SettingsRepository
-import com.controllg.app.downloadUpdate
 import com.controllg.app.exportConfigJson
-import com.controllg.app.installUpdate
-import com.controllg.app.installedVersion
 import com.controllg.app.installedVersionName
-import com.controllg.app.latestVersion
+import com.controllg.app.openDownloadPage
 import com.controllg.app.parseConfigJson
 import com.controllg.app.profileById
 import kotlinx.coroutines.Dispatchers
@@ -246,45 +243,27 @@ fun SettingsScreen(
     }
 }
 
-/** «Buscar actualización»: compara con la versión del enlace de descarga y la instala encima. */
+/** «Buscar actualización»: abre el enlace de la última versión en el navegador. */
 @Composable
 private fun UpdateSection(notify: (String) -> Unit) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var busy by remember { mutableStateOf(false) }
-    val installed = remember { installedVersion(context) }
-
     SectionTitle("Actualización")
     Text(
-        "Versión instalada: ${installedVersionName(context)}",
+        "Versión instalada: ${installedVersionName(context)}. «Buscar actualización» descarga la última " +
+            "versión en el navegador: ábrela y toca Instalar (se instala encima, sin perder ajustes).",
         fontSize = 13.sp,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Button(
-        enabled = !busy,
         onClick = {
-            busy = true
-            scope.launch {
-                try {
-                    val latest = latestVersion()
-                    when {
-                        latest == null -> notify("No se pudo revisar: ¿hay internet?")
-                        latest <= installed -> notify("Ya tienes la última versión")
-                        else -> {
-                            notify("Descargando la versión nueva…")
-                            val file = downloadUpdate(context)
-                            installUpdate(context, file)
-                        }
-                    }
-                } catch (e: Exception) {
-                    notify("No se pudo actualizar: ${e.message ?: e.javaClass.simpleName}")
-                } finally {
-                    busy = false
-                }
+            try {
+                openDownloadPage(context)
+            } catch (e: Exception) {
+                notify("No hay navegador para abrir el enlace")
             }
         },
         modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-    ) { Text(if (busy) "Buscando…" else "Buscar actualización") }
+    ) { Text("Buscar actualización") }
 }
 
 /** Lista de teles: elegir, renombrar, borrar y agregar. */

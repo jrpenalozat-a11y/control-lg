@@ -15,8 +15,9 @@ Enlace directo a la última versión (se puede mandar a cualquiera):
 
 https://github.com/jrpenalozat-a11y/control-lg/releases/latest/download/ControlCasa.apk
 
-Para actualizar: Configuración → **Buscar actualización** (descarga la última versión y la instala
-encima, sin perder ajustes). Al abrir la app también avisa si hay una nueva.
+Para actualizar: Configuración → **Buscar actualización** abre este enlace en el navegador; se abre
+el archivo y se instala encima, sin perder ajustes. (La app no descarga ni instala nada por su cuenta:
+eso hace que Google Play Protect la marque como dañina.)
 
 Dentro de la app, el botón **Compartir** (arriba, al lado del engranaje) envía el APK por
 WhatsApp, Bluetooth o Quick Share, sin internet.
