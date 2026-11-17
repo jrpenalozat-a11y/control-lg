@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -41,6 +42,7 @@ import com.controllg.app.commandCount
 import com.controllg.app.RemoteKey
 import com.controllg.app.formatHexCode
 import com.controllg.app.parseHexCode
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -252,6 +254,27 @@ private fun CodeFinderDialog(
         return i
     }
 
+    fun previous(from: Int): Int {
+        var i = from - 1
+        while (i > 0 && candidate(i) in known) i--
+        return i.coerceAtLeast(0)
+    }
+
+    fun sendNext() {
+        index = next(index)
+        if (index < total) scope.launch { onTest(candidate(index)) }
+    }
+
+    // Modo automático: un código cada 3 segundos hasta que se pause o se acaben.
+    var auto by remember(prefix) { mutableStateOf(false) }
+    LaunchedEffect(auto) {
+        while (auto) {
+            sendNext()
+            if (index >= total) auto = false
+            delay(3000)
+        }
+    }
+
     val currentCode = if (index in 0 until total) candidate(index) else null
 
     AlertDialog(
@@ -260,9 +283,10 @@ private fun CodeFinderDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    "Apunta a la tele y toca «Enviar siguiente». Cuando la tele haga lo de «${target.label}», " +
-                        "toca «¡Funcionó!». Puede que otros códigos cambien el canal o abran menús: " +
-                        "no pasa nada, sigue probando.",
+                    "Apunta a la tele y toca «Automático»: la app prueba un código cada 3 segundos. " +
+                        "Cuando la tele haga lo de «${target.label}», toca «Pausar» y luego «Repetir» " +
+                        "(o «Anterior») para confirmar cuál fue, y «¡Funcionó! Guardar». " +
+                        "Si un código apaga la tele o abre un menú, no pasa nada: sigue.",
                     fontSize = 14.sp,
                     lineHeight = 19.sp,
                 )
@@ -290,27 +314,38 @@ private fun CodeFinderDialog(
                     fontFamily = FontFamily.Monospace,
                     fontSize = 15.sp,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        enabled = prefix != null && index < total,
+                Button(
+                    enabled = prefix != null && (index < total - 1 || auto),
+                    onClick = { auto = !auto },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                ) { Text(if (auto) "Pausar" else "Automático") }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    OutlinedButton(
+                        enabled = !auto && index > 0,
                         onClick = {
-                            index = next(index)
-                            if (index < total) scope.launch { onTest(candidate(index)) }
+                            index = previous(index)
+                            scope.launch { onTest(candidate(index)) }
                         },
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                    ) { Text("Enviar siguiente") }
+                    ) { Text("Anterior", maxLines = 1) }
                     OutlinedButton(
-                        enabled = currentCode != null,
+                        enabled = !auto && currentCode != null,
                         onClick = { scope.launch { onTest(currentCode) } },
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) { Text("Repetir") }
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    ) { Text("Repetir", maxLines = 1) }
+                    OutlinedButton(
+                        enabled = !auto && prefix != null && index < total,
+                        onClick = { sendNext() },
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    ) { Text("Siguiente", maxLines = 1) }
                 }
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 enabled = currentCode != null,
                 onClick = {
+                    auto = false
                     currentCode?.let(onSave)
                     onDismiss()
                 },
