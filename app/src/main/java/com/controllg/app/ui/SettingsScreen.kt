@@ -61,6 +61,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenEditor: () -> Unit,
     onOpenWizard: () -> Unit,
+    onOpenAutoSearch: () -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -159,6 +160,16 @@ fun SettingsScreen(
         }
         Button(onClick = onOpenWizard, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text("Probar mi tele")
+        }
+        settings.tv.foundRemote?.let { found ->
+            Text(
+                "Usando el control encontrado: $found",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Button(onClick = onOpenAutoSearch, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
+            Text("Búsqueda automática (tele de otra marca)")
         }
         OutlinedButton(onClick = onOpenEditor, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) {
             Text("Editor de códigos")

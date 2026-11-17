@@ -35,6 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.controllg.app.AppSettings
 import com.controllg.app.IrProtocol
+import com.controllg.app.brandOf
+import com.controllg.app.candidateCode
+import com.controllg.app.commandCount
 import com.controllg.app.RemoteKey
 import com.controllg.app.formatHexCode
 import com.controllg.app.parseHexCode
@@ -104,7 +107,7 @@ fun EditorScreen(
         CodeFinderDialog(
             target = target,
             codes = codes,
-            protocol = profile.protocol,
+            protocol = settings.protocol,
             onTest = onTest,
             onSave = { code ->
                 onSetCode(target, code)
@@ -225,10 +228,7 @@ private fun CodeFinderDialog(
     val known = remember(codes) { codes.values.filterNotNull().toSet() }
     val defaultPrefix = remember(codes) {
         val base = codes[RemoteKey.POWER] ?: codes.values.firstOrNull { it != null }
-        val brand = when (protocol) {
-            IrProtocol.NEC -> ((base ?: 0x20DF0000L) shr 16) and 0xFFFF
-            IrProtocol.RC6 -> ((base ?: 0L) shr 8) and 0xFF
-        }
+        val brand = if (base != null) brandOf(protocol, base) else if (protocol == IrProtocol.NEC) 0x20DFL else 0L
         String.format(Locale.ROOT, "%04X", brand)
     }
     var prefixText by remember { mutableStateOf(defaultPrefix) }
@@ -236,19 +236,17 @@ private fun CodeFinderDialog(
     // Posición dentro de los 256 comandos; -1 = todavía no se envía ninguno.
     var index by remember(prefix) { mutableIntStateOf(-1) }
 
-    fun candidate(i: Int): Long = when (protocol) {
-        IrProtocol.NEC -> ((prefix ?: 0L) shl 16) or (i.toLong() shl 8) or (i.inv().toLong() and 0xFF)
-        IrProtocol.RC6 -> (((prefix ?: 0L) and 0xFF) shl 8) or i.toLong()
-    }
+    val total = commandCount(protocol)
+    fun candidate(i: Int): Long = candidateCode(protocol, prefix ?: 0L, i)
 
     /** Siguiente comando que no sea de otro botón (así no se apaga la tele por error). */
     fun next(from: Int): Int {
         var i = from + 1
-        while (i < 256 && candidate(i) in known) i++
+        while (i < total && candidate(i) in known) i++
         return i
     }
 
-    val currentCode = if (index in 0..255) candidate(index) else null
+    val currentCode = if (index in 0 until total) candidate(index) else null
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -279,8 +277,8 @@ private fun CodeFinderDialog(
                 )
                 Text(
                     when {
-                        currentCode != null -> "Prueba ${index + 1} de 256 · ${formatHexCode(currentCode)}"
-                        index >= 256 -> "Se probaron los 256 códigos. Prueba otra marca o revisa la tele."
+                        currentCode != null -> "Prueba ${index + 1} de $total · ${formatHexCode(currentCode)}"
+                        index >= total -> "Se probaron los $total códigos. Prueba otra marca o revisa la tele."
                         else -> "Todavía no se envía ningún código."
                     },
                     fontFamily = FontFamily.Monospace,
@@ -288,10 +286,10 @@ private fun CodeFinderDialog(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
-                        enabled = prefix != null && index < 256,
+                        enabled = prefix != null && index < total,
                         onClick = {
                             index = next(index)
-                            if (index < 256) scope.launch { onTest(candidate(index)) }
+                            if (index < total) scope.launch { onTest(candidate(index)) }
                         },
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                     ) { Text("Enviar siguiente") }

@@ -29,6 +29,10 @@ data class TvConfig(
     /** Códigos cambiados en el editor, por perfil: BOTON → "0x…" o "" (sin código). */
     val overrides: Map<String, Map<String, String>> = emptyMap(),
     val hiddenApps: Set<RemoteKey> = DEFAULT_HIDDEN_APPS,
+    /** Tipo de señal elegido por la Búsqueda automática (null = el del perfil). */
+    val protocolOverride: IrProtocol? = null,
+    /** Control encontrado por la Búsqueda automática, para mostrarlo. */
+    val foundRemote: String? = null,
 )
 
 /** Teles de partida: la LG de la cocina y la AOC de la pieza de Pipi. */
@@ -50,6 +54,9 @@ data class AppSettings(
     val overrides: Map<String, Map<String, String>> get() = tv.overrides
     val hiddenApps: Set<RemoteKey> get() = tv.hiddenApps
     val profile: CodeProfile get() = profileById(profileId)
+
+    /** Tipo de señal con que se envían los códigos de la tele elegida. */
+    val protocol: IrProtocol get() = tv.protocolOverride ?: profile.protocol
 
     /** Códigos que se envían de verdad: los de fábrica del perfil con los cambios del editor. */
     fun effectiveCodes(): Map<RemoteKey, Long?> {
@@ -156,7 +163,21 @@ class SettingsRepository(context: Context) {
     }
 
     suspend fun setProfile(profileId: String) {
-        editTv { it.copy(profileId = profileById(profileId).id) }
+        editTv { it.copy(profileId = profileById(profileId).id, protocolOverride = null, foundRemote = null) }
+    }
+
+    /** Guarda en la tele elegida todos los botones de un control encontrado con la Búsqueda automática. */
+    suspend fun applyCodeSet(set: CodeSet) {
+        editTv { tv ->
+            val mine = HashMap<String, String>()
+            for ((key, code) in set.codes) mine[key.name] = formatHexCode(code)
+            tv.copy(
+                profileId = PROFILE_BLANK,
+                overrides = tv.overrides + (PROFILE_BLANK to mine),
+                protocolOverride = set.protocol,
+                foundRemote = "${set.brand} · ${set.model}",
+            )
+        }
     }
 
     suspend fun setWizardDone(done: Boolean) {
@@ -220,7 +241,9 @@ private fun encodeTvs(tvs: List<TvConfig>): String {
                 .put("nombre", tv.name)
                 .put("perfil", tv.profileId)
                 .put("codigos", JSONObject(encodeOverrides(tv.overrides)))
-                .put("appsOcultas", hidden),
+                .put("appsOcultas", hidden)
+                .put("protocolo", tv.protocolOverride?.name ?: "")
+                .put("controlEncontrado", tv.foundRemote ?: ""),
         )
     }
     return array.toString()
@@ -248,6 +271,8 @@ private fun decodeTvs(text: String?): List<TvConfig>? {
                         .mapNotNull { j -> APP_KEYS.firstOrNull { it.name == hidden.optString(j) } }
                         .toSet()
                 },
+                protocolOverride = IrProtocol.entries.firstOrNull { it.name == obj.optString("protocolo") },
+                foundRemote = obj.optString("controlEncontrado").ifEmpty { null },
             )
         }
         tvs.ifEmpty { null }

@@ -25,6 +25,10 @@ WhatsApp, Bluetooth o Quick Share, sin internet.
   Configuración → Mis teles.
 - Perfiles: LG estándar, LG alternativo, **Roku TV** (TCL, Hisense, AOC Roku…), **AOC / Philips (RC6)** (Smart TV AOC y Philips latinoamericanas, fabricadas por TPV) y «Otra marca» (vacío).
 - Botones de Netflix, Prime Video, Disney+, YouTube, Max y Spotify (ocultables por tele).
+- **Búsqueda automática** (Configuración): como un control universal, prueba el botón de encendido
+  de 61 controles de distintas marcas (AOC y Philips primero) hasta que la tele se apaga, y guarda
+  todos los botones de ese control. La base sale de [Flipper-IRDB](https://github.com/Lucaslhm/Flipper-IRDB)
+  (dominio público, CC0) con `tools/gen_ir_tvs.py`. Señales: NEC, Samsung, RC5 y RC6.
 - **Buscador de código** en el Editor: prueba uno por uno los 256 códigos de una marca hasta que la
   tele responde, y lo guarda en ese botón. Sirve para las apps sin código de fábrica y para teles
   de otra marca (la AOC 32S5295 de la pieza parte con el perfil «Otra marca», sin códigos).

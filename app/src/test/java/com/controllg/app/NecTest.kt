@@ -101,4 +101,33 @@ class NecTest {
         assertEquals(0x0CL, tpv.codes[RemoteKey.POWER])
         assertEquals(PROFILE_TPV, DEFAULT_TVS.first { it.id == "pieza" }.profileId)
     }
+
+    @Test
+    fun samsung_tiene_cabecera_4500() {
+        val p = encodeSamsung(0xE0E040BFL)
+        assertEquals(4500, p[0])
+        assertEquals(4500, p[1])
+        assertEquals(67, p.size)
+    }
+
+    @Test
+    fun rc5_empieza_y_termina_encendido() {
+        val p = encodeRc5(0x000CL, toggle = false) // Philips: dirección 0, encendido 12
+        assert(p.size % 2 == 1)
+        // 14 bits de 2 medios de 889 µs; el primer medio (apagado) no se envía.
+        assert(p.sum() <= 14 * 2 * 889 - 889)
+        assert(!p.contentEquals(encodeRc5(0x000CL, toggle = true)))
+    }
+
+    @Test
+    fun base_de_controles_se_lee_y_trae_aoc_philips_primero() {
+        val text = java.io.File("src/main/assets/teles_ir.json").readText()
+        val sets = parseCodeSets(text)
+        assert(sets.size > 40)
+        assert(sets.first().brand.lowercase().let { it.startsWith("aoc") || it.startsWith("philips") })
+        // La LG de la cocina y la Roku están en la base con el mismo código de encendido que la app.
+        assert(sets.any { it.protocol == IrProtocol.NEC && it.power == 0x20DF10EFL })
+        assert(sets.any { it.protocol == IrProtocol.NEC && it.power == 0x57E3E817L })
+        assert(sets.all { RemoteKey.POWER in it.codes })
+    }
 }

@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.controllg.app.ui.AutoSearchScreen
 import com.controllg.app.ui.ControlLgTheme
 import com.controllg.app.ui.EditorScreen
 import com.controllg.app.ui.PowerIcon
@@ -69,7 +70,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class Screen { REMOTE, SETTINGS, EDITOR, WIZARD }
+private enum class Screen { REMOTE, SETTINGS, EDITOR, WIZARD, AUTOSEARCH }
 
 @Composable
 private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
@@ -95,7 +96,7 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
         }
     }
 
-    suspend fun sendCode(code: Long?, protocol: IrProtocol = loaded?.profile?.protocol ?: IrProtocol.NEC) {
+    suspend fun sendCode(code: Long?, protocol: IrProtocol = loaded?.protocol ?: IrProtocol.NEC) {
         if (code == null) {
             notify("Este botón no tiene código. Agrégalo en Configuración → Editor de códigos.", replace = false)
             return
@@ -159,7 +160,25 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
                         onBack = { chosenScreen = Screen.REMOTE },
                         onOpenEditor = { chosenScreen = Screen.EDITOR },
                         onOpenWizard = { chosenScreen = Screen.WIZARD },
+                        onOpenAutoSearch = { chosenScreen = Screen.AUTOSEARCH },
                     )
+
+                    Screen.AUTOSEARCH -> {
+                        val sets = remember { runCatching { loadCodeSets(context) }.getOrDefault(emptyList()) }
+                        AutoSearchScreen(
+                            tvName = settings.tv.name,
+                            sets = sets,
+                            onSend = { code, protocol -> sendCode(code, protocol) },
+                            onFound = { set ->
+                                scope.launch {
+                                    repository.applyCodeSet(set)
+                                    chosenScreen = Screen.REMOTE
+                                    notify("Listo: «${settings.tv.name}» usa el control ${set.brand} · ${set.model}")
+                                }
+                            },
+                            onBack = { chosenScreen = Screen.SETTINGS },
+                        )
+                    }
 
                     Screen.EDITOR -> EditorScreen(
                         settings = settings,
