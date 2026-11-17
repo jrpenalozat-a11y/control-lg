@@ -12,8 +12,11 @@ android {
         applicationId = "com.controllg.app"
         minSdk = 21
         targetSdk = 35
-        versionCode = 2
-        versionName = "2.0"
+        // En GitHub Actions cada compilación sube el número (la app lo compara para avisar
+        // de actualizaciones). Fuera de GitHub queda en 2.
+        val run = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()
+        versionCode = if (run != null) 100 + run else 2
+        versionName = if (run != null) "2.$run" else "2.0"
     }
 
     // Clave fija: así cada versión nueva se instala encima de la anterior sin desinstalar.

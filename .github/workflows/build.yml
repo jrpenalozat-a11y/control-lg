@@ -41,8 +41,10 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk ControlCasa.apk
           # Mismo archivo con el nombre antiguo, para que el enlace anterior siga funcionando.
           cp ControlCasa.apk ControlLG.apk
+          # Número de versión que la app compara para «Buscar actualización».
+          echo $((100 + GITHUB_RUN_NUMBER)) > version.txt
           gh release delete ultima --yes --cleanup-tag || true
-          gh release create ultima ControlCasa.apk ControlLG.apk \
+          gh release create ultima ControlCasa.apk ControlLG.apk version.txt \
             --title "Control Casa (última versión)" \
             --notes "Descarga ControlCasa.apk e instálalo en un celular con emisor infrarrojo." \
             --target "$GITHUB_SHA" \

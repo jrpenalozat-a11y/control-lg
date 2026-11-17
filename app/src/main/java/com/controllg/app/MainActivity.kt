@@ -28,6 +28,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,6 +86,7 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
 
     val context = LocalContext.current
     val view = LocalView.current
+
     val keepScreenOn = loaded?.keepScreenOn == true
     DisposableEffect(view, keepScreenOn) {
         view.keepScreenOn = keepScreenOn
@@ -97,6 +99,14 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
             snackbar.showSnackbar(message)
+        }
+    }
+
+    // Al abrir la app: si hay una versión nueva en el enlace, se avisa (no descarga nada solo).
+    LaunchedEffect(Unit) {
+        val latest = latestVersion() ?: return@LaunchedEffect
+        if (latest > installedVersion(context)) {
+            notify("Hay una versión nueva: Configuración → Buscar actualización")
         }
     }
 
