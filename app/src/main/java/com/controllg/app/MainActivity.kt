@@ -51,6 +51,7 @@ import com.controllg.app.ui.PowerIcon
 import com.controllg.app.ui.RemoteScreen
 import com.controllg.app.ui.SettingsScreen
 import com.controllg.app.ui.WizardScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -151,7 +152,16 @@ private fun ControlLgApp(ir: IrSender, repository: SettingsRepository) {
                         hiddenApps = settings.hiddenApps,
                         onSend = { key ->
                             val code = codes[key]
-                            if (code == null) {
+                            val macro = settings.profile.macros[key]
+                                ?.takeIf { settings.tv.protocolOverride == null }
+                                ?.takeIf { steps -> steps.all { codes[it] != null } }
+                            if (code == null && macro != null) {
+                                notify("Abriendo ${key.label}…")
+                                for (step in macro) {
+                                    sendCode(codes[step])
+                                    delay(if (step == RemoteKey.HOME) 3000 else 700)
+                                }
+                            } else if (code == null) {
                                 searchKey = key
                                 chosenScreen = Screen.EDITOR
                             } else {

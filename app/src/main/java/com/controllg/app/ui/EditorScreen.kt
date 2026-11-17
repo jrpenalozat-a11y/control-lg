@@ -2,6 +2,7 @@ package com.controllg.app.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -319,25 +320,28 @@ private fun CodeFinderDialog(
                     onClick = { auto = !auto },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                 ) { Text(if (auto) "Pausar" else "Automático") }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     OutlinedButton(
+                        contentPadding = PaddingValues(horizontal = 2.dp),
                         enabled = !auto && index > 0,
                         onClick = {
                             index = previous(index)
                             scope.launch { onTest(candidate(index)) }
                         },
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                    ) { Text("Anterior", maxLines = 1) }
+                    ) { Text("Anterior", maxLines = 1, fontSize = 13.sp, softWrap = false) }
                     OutlinedButton(
+                        contentPadding = PaddingValues(horizontal = 2.dp),
                         enabled = !auto && currentCode != null,
                         onClick = { scope.launch { onTest(currentCode) } },
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                    ) { Text("Repetir", maxLines = 1) }
+                    ) { Text("Repetir", maxLines = 1, fontSize = 13.sp, softWrap = false) }
                     OutlinedButton(
+                        contentPadding = PaddingValues(horizontal = 2.dp),
                         enabled = !auto && prefix != null && index < total,
                         onClick = { sendNext() },
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp),
-                    ) { Text("Siguiente", maxLines = 1) }
+                    ) { Text("Siguiente", maxLines = 1, fontSize = 13.sp, softWrap = false) }
                 }
             }
         },

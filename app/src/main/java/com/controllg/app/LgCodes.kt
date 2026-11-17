@@ -113,6 +113,11 @@ data class CodeProfile(
     /** Botones que envía el asistente «Probar mi tele». */
     val testKeys: List<RemoteKey>,
     val protocol: IrProtocol = IrProtocol.NEC,
+    /**
+     * Atajos para botones sin código propio: se envían estos botones en orden
+     * (tras Home se espera a que cargue el inicio). Ej.: YouTube = Home → Derecha → OK.
+     */
+    val macros: Map<RemoteKey, List<RemoteKey>> = emptyMap(),
 )
 
 const val PROFILE_STANDARD = "lg_estandar"
@@ -158,6 +163,8 @@ private val AOC_CODES: Map<RemoteKey, Long?> = BLANK_CODES + linkedMapOf(
     RemoteKey.CH_UP to 0x00BD18E7L,
     RemoteKey.CH_DOWN to 0x00BD38C7L,
     RemoteKey.INPUT to 0x00BD10EFL,
+    // En la 32S5295 el botón de entrada abre el inicio smart (Fuentes, Televisor, Apps…).
+    RemoteKey.HOME to 0x00BD10EFL,
     RemoteKey.SETTINGS to 0x00BD50AFL,
     RemoteKey.UP to 0x00BDD02FL,
     RemoteKey.DOWN to 0x00BDF00FL,
@@ -244,6 +251,12 @@ val PROFILES = listOf(
         description = "AOC con menú «Configuración» (p. ej. 32S5295). Encender, volumen, canales, flechas, OK, menú y números.",
         codes = AOC_CODES,
         testKeys = listOf(RemoteKey.POWER),
+        // En el inicio de la 32S5295 las apps van: Netflix (elegida) · YouTube · Prime Video.
+        macros = mapOf(
+            RemoteKey.NETFLIX to listOf(RemoteKey.HOME, RemoteKey.OK),
+            RemoteKey.YOUTUBE to listOf(RemoteKey.HOME, RemoteKey.RIGHT, RemoteKey.OK),
+            RemoteKey.PRIME to listOf(RemoteKey.HOME, RemoteKey.RIGHT, RemoteKey.RIGHT, RemoteKey.OK),
+        ),
     ),
     CodeProfile(
         id = PROFILE_TPV,
