@@ -20,7 +20,7 @@ WhatsApp, Bluetooth o Quick Share, sin internet.
 
 ## Qué trae
 
-- **Varias teles en un solo control**: arriba se elige cuál manejar («LG cocina», «TV Pipi pieza»…).
+- **Varias teles en un solo control**: arriba se elige cuál manejar («LG cocina», «Pieza Pipi»…).
   Cada tele guarda su perfil, sus códigos y sus botones de apps. Se agregan, renombran y borran en
   Configuración → Mis teles.
 - Perfiles: LG estándar, LG alternativo, **Roku TV** (TCL, Hisense, AOC Roku…) y «Otra marca» (vacío).

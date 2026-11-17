@@ -31,10 +31,10 @@ data class TvConfig(
     val hiddenApps: Set<RemoteKey> = DEFAULT_HIDDEN_APPS,
 )
 
-/** Teles de partida: la LG de la cocina y la AOC de la pieza. */
+/** Teles de partida: la LG de la cocina y la AOC de la pieza de Pipi. */
 val DEFAULT_TVS = listOf(
     TvConfig(id = "cocina", name = "LG cocina", profileId = PROFILE_STANDARD),
-    TvConfig(id = "pieza", name = "TV Pipi pieza", profileId = PROFILE_BLANK),
+    TvConfig(id = "pieza", name = "Pieza Pipi", profileId = PROFILE_BLANK),
 )
 
 data class AppSettings(
@@ -236,7 +236,9 @@ private fun decodeTvs(text: String?): List<TvConfig>? {
             val hidden = obj.optJSONArray("appsOcultas")
             TvConfig(
                 id = obj.optString("id").ifEmpty { UUID.randomUUID().toString() },
-                name = obj.optString("nombre").ifEmpty { "Tele ${i + 1}" },
+                name = obj.optString("nombre").ifEmpty { "Tele ${i + 1}" }
+                    // Nombre antiguo de fábrica → nombre nuevo (si nadie lo cambió a mano).
+                    .let { if (it == "TV Pipi pieza") "Pieza Pipi" else it },
                 profileId = profileById(obj.optString("perfil")).id,
                 overrides = decodeOverrides(obj.optJSONObject("codigos")?.toString()),
                 hiddenApps = if (hidden == null) {
